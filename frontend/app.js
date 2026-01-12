@@ -43,6 +43,11 @@ const utils = {
 
     async sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    statusToString(statusInt) {
+        const statusMap = { 0: 'Open', 1: 'Completed', 2: 'Cancelled' };
+        return statusMap[statusInt] || 'Unknown';
     }
 };
 
@@ -61,6 +66,19 @@ const wallet = {
 
             // Initialize web3
             state.web3 = window.ethereum;
+
+            // Check and switch to the correct network
+            const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+            if (currentChainId !== CONFIG.NETWORK.chainId) {
+                try {
+                    await this.switchNetwork();
+                } catch (switchError) {
+                    // User cancelled or network switch failed
+                    console.error('Network switch error:', switchError);
+                    utils.showStatus('Please switch to the Hardhat Local network (Chain ID: 31337) in MetaMask', 'error');
+                    // Don't throw - allow connection to continue
+                }
+            }
 
             // Initialize contracts
             state.bountyBoardContract = {
@@ -151,6 +169,11 @@ const wallet = {
                 }
             });
 
+            window.ethereum.on('chainChanged', (chainId) => {
+                // Reload the page when chain changes (recommended by MetaMask)
+                window.location.reload();
+            });
+
             utils.showStatus('Wallet connected successfully!', 'success');
             return true;
         } catch (error) {
@@ -164,6 +187,32 @@ const wallet = {
         state.account = null;
         state.web3 = null;
         this.updateUI();
+    },
+
+    async switchNetwork() {
+        // Try to switch to the Hardhat network
+        try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: CONFIG.NETWORK.chainId }],
+            });
+        } catch (switchError) {
+            // This error code indicates that the chain has not been added to MetaMask
+            if (switchError.code === 4902) {
+                // Chain not added, try to add it
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: CONFIG.NETWORK.chainId,
+                        chainName: CONFIG.NETWORK.chainName,
+                        rpcUrls: [CONFIG.NETWORK.rpcUrl],
+                    }],
+                });
+            } else {
+                // User rejected or other error
+                throw switchError;
+            }
+        }
     },
 
     updateUI() {
@@ -269,6 +318,18 @@ const api = {
         }
     },
 
+    async fetchMyBounties(creatorAddress) {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/my-bounties/${creatorAddress}`);
+            if (!response.ok) throw new Error('Failed to fetch your bounties');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching your bounties:', error);
+            utils.showStatus('Failed to load your bounties', 'error');
+            return [];
+        }
+    },
+
     async fetchBounty(id) {
         try {
             const response = await fetch(`${CONFIG.API_BASE_URL}/bounty/${id}`);
@@ -280,28 +341,49 @@ const api = {
         }
     },
 
-    async createBounty(bountyId, title, description, amount, attachments) {
+    async createBounty(bountyId, title, description, amountMNEE, creatorAddress) {
         try {
+            // Convert MNEE to wei string for API
+            const amountWei = utils.mneeToWei(amountMNEE).toString();
+
+            console.log('API createBounty called with:', {
+                id: bountyId,
+                title,
+                description,
+                creator_address: creatorAddress,
+                amount: amountWei
+            });
+
             const response = await fetch(`${CONFIG.API_BASE_URL}/bounty`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    bounty_id: bountyId,
+                    id: bountyId,
                     title: title,
                     description: description,
-                    amount: amount,
-                    attachments: attachments || ''
+                    creator_address: creatorAddress,
+                    amount: amountWei
                 })
             });
 
+            console.log('API response status:', response.status);
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to create bounty');
+                const errorText = await response.text();
+                console.error('API error response:', errorText);
+                try {
+                    const error = JSON.parse(errorText);
+                    throw new Error(error.detail || 'Failed to create bounty');
+                } catch (parseError) {
+                    throw new Error(`Failed to create bounty: ${response.status} ${errorText}`);
+                }
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('API success response:', result);
+            return result;
         } catch (error) {
-            console.error('Error creating bounty:', error);
+            console.error('Error in createBounty API call:', error);
             throw error;
         }
     },
@@ -349,6 +431,11 @@ const ui = {
 
         // Old nav-tabs (if they exist)
         document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const view = tab.dataset.view;
+                this.switchView(view);
+            });
+        });
 
         // Refresh buttons
         document.getElementById('refreshBounties').addEventListener('click', () => {
@@ -438,10 +525,8 @@ const ui = {
         const container = document.getElementById('myBountiesList');
         container.innerHTML = '<p class="loading">Loading your bounties...</p>';
 
-        const allBounties = await api.fetchBounties();
-        const myBounties = allBounties.filter(b =>
-            b.creator.toLowerCase() === state.account.toLowerCase()
-        );
+        // Use the new my-bounties endpoint (no delay)
+        const myBounties = await api.fetchMyBounties(state.account);
 
         state.myBounties = myBounties;
 
@@ -462,17 +547,18 @@ const ui = {
     },
 
     renderBountyCard(bounty) {
-        const statusClass = bounty.status === 'Open' ? 'open' : bounty.status === 'Completed' ? 'completed' : 'cancelled';
+        const statusString = utils.statusToString(bounty.status);
+        const statusClass = statusString === 'Open' ? 'open' : statusString === 'Completed' ? 'completed' : 'cancelled';
         return `
-            <div class="bounty-card" data-id="${bounty.bounty_id}">
+            <div class="bounty-card" data-id="${bounty.id}">
                 <h3>${this.escapeHtml(bounty.title)}</h3>
                 <div class="bounty-meta">
-                    <span class="badge badge-${statusClass}">${bounty.status}</span>
+                    <span class="badge badge-${statusClass}">${statusString}</span>
                     <span class="amount">${bounty.amount_mnee} MNEE</span>
                 </div>
                 <p class="description">${this.escapeHtml(bounty.description)}</p>
                 <div class="bounty-footer">
-                    <span>By ${utils.formatAddress(bounty.creator)}</span>
+                    <span>By ${utils.formatAddress(bounty.creator_address)}</span>
                     <span>${utils.formatDate(bounty.created_at)}</span>
                 </div>
             </div>
@@ -498,13 +584,14 @@ const ui = {
         document.getElementById('detailTitle').textContent = bounty.title;
         document.getElementById('detailDescription').textContent = bounty.description;
         document.getElementById('detailAmount').textContent = `${bounty.amount_mnee} MNEE`;
-        document.getElementById('detailCreator').textContent = bounty.creator;
-        document.getElementById('detailId').textContent = bounty.bounty_id;
+        document.getElementById('detailCreator').textContent = bounty.creator_address;
+        document.getElementById('detailId').textContent = bounty.id;
         document.getElementById('detailCreated').textContent = utils.formatDate(bounty.created_at);
 
-        const statusClass = bounty.status === 'Open' ? 'open' : bounty.status === 'Completed' ? 'completed' : 'cancelled';
+        const statusString = utils.statusToString(bounty.status);
+        const statusClass = statusString === 'Open' ? 'open' : statusString === 'Completed' ? 'completed' : 'cancelled';
         const statusBadge = document.getElementById('detailStatus');
-        statusBadge.textContent = bounty.status;
+        statusBadge.textContent = statusString;
         statusBadge.className = `badge badge-${statusClass}`;
 
         // Attachments
@@ -527,7 +614,7 @@ const ui = {
 
         // Show/hide actions based on ownership and status
         const actionsDiv = document.getElementById('bountyActions');
-        if (state.account && bounty.creator.toLowerCase() === state.account.toLowerCase() && bounty.status === 'Open') {
+        if (state.account && bounty.creator_address.toLowerCase() === state.account.toLowerCase() && bounty.status === 0) {
             actionsDiv.classList.remove('hidden');
         } else {
             actionsDiv.classList.add('hidden');
@@ -555,8 +642,8 @@ const ui = {
     renderSubmission(submission, index) {
         const canRelease = state.currentBounty &&
                           state.account &&
-                          state.currentBounty.creator.toLowerCase() === state.account.toLowerCase() &&
-                          state.currentBounty.status === 'Open';
+                          state.currentBounty.creator_address.toLowerCase() === state.account.toLowerCase() &&
+                          state.currentBounty.status === 0;
 
         return `
             <div class="submission-card">
@@ -604,15 +691,19 @@ const ui = {
             const receipt = await wallet.waitForTransaction(txHash);
 
             // Extract bounty ID from transaction receipt
+            console.log('Transaction receipt:', receipt);
             const bountyId = await this.extractBountyIdFromReceipt(receipt);
+            console.log('Extracted bounty ID:', bountyId);
 
             if (!bountyId) {
+                console.error('Receipt logs:', receipt.logs);
                 throw new Error('Failed to get bounty ID from transaction');
             }
 
             // Step 3: Save metadata to API
             utils.showStatus('Step 3/3: Saving bounty metadata...', 'info');
-            await api.createBounty(bountyId, title, description, amountMNEE, attachments);
+            console.log('Calling API with:', { bountyId, title, description, amountMNEE, creator: state.account });
+            await api.createBounty(bountyId, title, description, amountMNEE, state.account);
 
             utils.showStatus('Bounty created successfully!', 'success');
 

@@ -275,7 +275,7 @@ If you want to complete a bounty manually (without building an agent):
 
 ### Submission Not Showing
 
-- API may have 1-hour delay for anti-spam
+- API may have 15-minute delay for anti-spam
 - Submission is still recorded on API
 - Creator can see it when reviewing
 - Contact support if issue persists

@@ -3,6 +3,9 @@ require("@nomicfoundation/hardhat-chai-matchers");
 require("@nomicfoundation/hardhat-network-helpers");
 require("@nomicfoundation/hardhat-ignition-ethers");
 
+// Load custom tasks
+require("./tasks/mint");
+
 module.exports = {
   solidity: {
     version: "0.8.20",

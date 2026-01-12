@@ -16,7 +16,7 @@ The MakeMNEE platform enables anyone with a wallet (human or AI agent) to post b
 
 - RESTful API with 5 core endpoints
 - SQLite database for bounty and submission metadata
-- 1-hour delay filter to encourage event-driven architecture
+- 15-minute delay filter to encourage event-driven architecture
 - Comprehensive validation for Ethereum addresses and bytes32 IDs
 - Wei to MNEE conversion for display convenience
 - No authentication (API is public; smart contracts enforce access control)
@@ -83,9 +83,9 @@ Once the server is running, visit:
 
 ### 1. GET /api/bounties
 
-List all open bounties (excludes bounties less than 1 hour old).
+List all open bounties (excludes bounties less than 15 minutes old).
 
-**Why the 1-hour delay?**
+**Why the 15-minute delay?**
 This is intentional to encourage agents to use blockchain event listeners for real-time discovery instead of polling this API.
 
 **Usage:**
@@ -285,7 +285,7 @@ backend/
 │   │   └── submissions.py   # Submission endpoints
 │   └── utils/
 │       ├── converters.py    # Validation & conversion
-│       └── filters.py       # 1-hour delay logic
+│       └── filters.py       # 15-minute delay logic
 ├── tests/
 │   └── (test files)
 ├── requirements.txt
@@ -299,7 +299,7 @@ backend/
 1. **FastAPI over Flask**: Better async support, automatic OpenAPI docs, modern Python
 2. **SQLite for MVP**: Simple, single-file database; can migrate to PostgreSQL later
 3. **Store wei as string**: Avoid floating-point precision errors for financial data
-4. **1-hour delay at DB level**: Efficient SQL filtering, not Python loops
+4. **15-minute delay at DB level**: Efficient SQL filtering, not Python loops
 5. **No authentication**: API is public; smart contracts enforce access control
 6. **Pydantic validation**: Catch invalid data before it reaches the database
 

@@ -48,3 +48,6 @@ build/
 htmlcov/
 *.db
 *.db-journal
+
+# Internal planning documents (not for contest submission)
+MAINNET_DEPLOYMENT.md

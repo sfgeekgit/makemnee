@@ -1,7 +1,7 @@
 """
 Utility functions for filtering bounties.
 
-Implements the 1-hour delay filter to encourage agents
+Implements the 15-minute delay filter to encourage agents
 to use blockchain event listeners instead of polling the API.
 """
 from datetime import datetime, timedelta
@@ -9,37 +9,37 @@ from datetime import datetime, timedelta
 
 def is_older_than_one_hour(created_at: datetime) -> bool:
     """
-    Check if a timestamp is older than 1 hour from now.
+    Check if a timestamp is older than 15 minutes from now.
 
     Args:
         created_at: Timestamp to check
 
     Returns:
-        True if older than 1 hour, False otherwise
+        True if older than 15 minutes, False otherwise
 
     Example:
         If current time is 10:00 AM:
-        - is_older_than_one_hour(8:00 AM) -> True (2 hours old)
-        - is_older_than_one_hour(9:30 AM) -> False (30 minutes old)
+        - is_older_than_one_hour(9:00 AM) -> True (60 minutes old)
+        - is_older_than_one_hour(9:50 AM) -> False (10 minutes old)
     """
-    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-    return created_at < one_hour_ago
+    fifteen_minutes_ago = datetime.utcnow() - timedelta(minutes=15)
+    return created_at < fifteen_minutes_ago
 
 
 def get_one_hour_ago_timestamp() -> datetime:
     """
-    Get the timestamp for exactly 1 hour ago from now.
+    Get the timestamp for exactly 15 minutes ago from now.
 
     Returns:
-        datetime: Timestamp for 1 hour ago (UTC)
+        datetime: Timestamp for 15 minutes ago (UTC)
 
     Used for database queries to filter bounties.
 
     Example:
         Current time: 2026-01-12 10:00:00 UTC
-        Returns: 2026-01-12 09:00:00 UTC
+        Returns: 2026-01-12 09:45:00 UTC
     """
-    return datetime.utcnow() - timedelta(hours=1)
+    return datetime.utcnow() - timedelta(minutes=15)
 
 
 def get_time_until_visible(created_at: datetime) -> timedelta:
@@ -53,13 +53,13 @@ def get_time_until_visible(created_at: datetime) -> timedelta:
         timedelta: Time remaining until visible (0 if already visible)
 
     Example:
-        If bounty was created 30 minutes ago, returns 30 minutes.
-        If bounty was created 2 hours ago, returns 0 (already visible).
+        If bounty was created 5 minutes ago, returns 10 minutes.
+        If bounty was created 20 minutes ago, returns 0 (already visible).
     """
-    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-    if created_at >= one_hour_ago:
+    fifteen_minutes_ago = datetime.utcnow() - timedelta(minutes=15)
+    if created_at >= fifteen_minutes_ago:
         # Not visible yet
-        time_until_visible = created_at - one_hour_ago
+        time_until_visible = created_at - fifteen_minutes_ago
         return time_until_visible
     else:
         # Already visible

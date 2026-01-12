@@ -19,7 +19,7 @@
 ### 2. Python API Backend (Step 3)
 - ✅ **FastAPI application** - All 5 endpoints implemented and tested
 - ✅ **SQLite database** - bounties and submissions tables with proper schema
-- ✅ **1-hour delay filter** - Intentional delay on /api/bounties to encourage event listening
+- ✅ **15-minute delay filter** - Intentional delay on /api/bounties to encourage event listening
 - ✅ **Data validation** - bytes32 IDs, Ethereum addresses, wei amounts
 - ✅ **Wei/MNEE conversion** - Automatic conversion for display (1 MNEE = 10^18 wei)
 - ✅ **Production ready** - Caddyfile, systemd service, deployment guide
@@ -136,7 +136,7 @@ implementation, update docs accordingly before final submission.
 │   │   │   └── submissions.py # Submission endpoints
 │   │   └── utils/
 │   │       ├── converters.py # Validation & conversion
-│   │       └── filters.py    # 1-hour delay logic
+│   │       └── filters.py    # 15-minute delay logic
 │   ├── tests/                # API tests
 │   ├── requirements.txt      # Python dependencies
 │   ├── run.py                # Dev server launcher
@@ -291,7 +291,7 @@ git push
 - Python API fully functional (5 endpoints)
 - All API endpoints tested with curl
 - Database schema working correctly
-- 1-hour delay filter verified
+- 15-minute delay filter verified
 - Production deployment files ready
 - **All documentation complete and reframed for agent-to-agent economy**
 - **Web frontend complete** - Live at https://makemnee.com with Traditional British Bank styling
@@ -302,11 +302,15 @@ git push
 
 **Git Status:**
 - **Last commit:** `5969f94` - "Add Python API backend and comprehensive documentation"
-- **Uncommitted changes:** Frontend styling overhaul (Traditional British Bank theme) + STATUS.md update
-- **Files modified:** STATUS.md, frontend/app.js, frontend/index.html, frontend/styles.css
-- **New directories:** frontend/img/ (MNEE logo SVG), frontend/mockups/ (4 style comparison pages)
-- **Untracked files:** frontend/styles.css.backup (can be removed)
-- **Action needed:** Commit frontend styling changes before starting Step 5
+- **Uncommitted changes:**
+  - Frontend: Network switching, API integration fixes, field name corrections
+  - Backend: New `/api/my-bounties/{address}` endpoint, 15-minute delay (changed from 1 hour)
+  - Docs: Updated all references from 1-hour to 15-minute delay
+  - Scripts: Added mint-tokens.js for local testing
+  - Config: Updated contract addresses after Hardhat redeployment
+- **Files modified:** 17 files (frontend, backend, docs)
+- **New files:** mint-tokens.js, frontend/img/, frontend/mockups/
+- **Action needed:** Commit all current changes
 
 **Key Decision - Agent-to-Agent Economy:**
 Documentation now emphasizes that **anyone with a wallet can post OR complete bounties**. This includes AI agents posting bounties for other agents to complete. This reframing makes the innovation much clearer: MakeMNEE enables autonomous agent-to-agent coordination, not just humans hiring agents.
@@ -332,7 +336,7 @@ This is all-or-nothing: complete everything tonight or don't submit. No "coming 
 4. **Bytes32 bounty IDs** - Generated via keccak256 hash (unpredictable)
 5. **No claim mechanism** - Bounties go directly Open → Completed/Cancelled
 6. **Multiple submissions allowed** - Creator picks best, others get nothing
-7. **1-hour API delay intentional** - Encourages event listening over polling
+7. **15-minute API delay intentional** - Encourages event listening over polling
 
 ---
 

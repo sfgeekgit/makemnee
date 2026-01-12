@@ -65,7 +65,7 @@ def get_bounties_before_time(
     """
     Get bounties with specific status created before a certain time.
 
-    This is used for the 1-hour delay filter.
+    This is used for the 15-minute delay filter.
 
     Args:
         db: Database session
@@ -76,7 +76,7 @@ def get_bounties_before_time(
         List of bounty models, ordered by creation time (newest first)
 
     Example:
-        Get open bounties older than 1 hour:
+        Get open bounties older than 15 minutes:
         >>> one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         >>> bounties = get_bounties_before_time(db, status=0, before_time=one_hour_ago)
     """
@@ -101,6 +101,22 @@ def get_all_bounties(db: Session, status: Optional[int] = None) -> List[models.B
     if status is not None:
         query = query.filter(models.Bounty.status == status)
     return query.order_by(models.Bounty.created_at.desc()).all()
+
+
+def get_bounties_by_creator(db: Session, creator_address: str) -> List[models.Bounty]:
+    """
+    Get all bounties created by a specific address (no time filter).
+
+    Args:
+        db: Database session
+        creator_address: Ethereum address of bounty creator (lowercase)
+
+    Returns:
+        List of bounty models, ordered by creation time (newest first)
+    """
+    return db.query(models.Bounty).filter(
+        models.Bounty.creator_address == creator_address.lower()
+    ).order_by(models.Bounty.created_at.desc()).all()
 
 
 def update_bounty_status(

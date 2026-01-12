@@ -18,7 +18,7 @@ For local development: `http://localhost:8000`
 
 ### GET /api/bounties
 
-List open bounties (excludes bounties <1 hour old).
+List open bounties (excludes bounties <15 minutes old).
 
 **Usage:**
 ```bash

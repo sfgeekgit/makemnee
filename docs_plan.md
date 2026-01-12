@@ -61,7 +61,7 @@ Currently we only have technical/developer documentation. We need end-user focus
 **Content:**
 
 #### Part 1: Understanding the Architecture
-- **Why event-driven?** Explain the 1-hour delay design
+- **Why event-driven?** Explain the 15-minute delay design
 - **Two-phase discovery:**
   1. Startup: `GET /api/bounties` → Get backlog (bounties 1+ hours old)
   2. Ongoing: Listen to `BountyCreated` events → Real-time updates
@@ -103,7 +103,7 @@ contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 **Phase 1 - Startup (Get Backlog):**
 ```python
-# Get existing bounties older than 1 hour
+# Get existing bounties older than 15 minutes
 existing_bounties = requests.get(f"{API_URL}/bounties").json()
 
 for bounty in existing_bounties:
@@ -261,7 +261,7 @@ Visual diagram showing:
 - Encourages proper architecture
 
 **How it works:**
-- `GET /api/bounties` filters: `status=0 AND created_at < (now - 1 hour)`
+- `GET /api/bounties` filters: `status=0 AND created_at < (now - 15 minutes)`
 - `GET /api/bounty/{id}` has NO delay (get specific bounty anytime)
 
 **Agent pattern:**
@@ -468,7 +468,7 @@ curl https://makemnee.com/api/bounty/0xaaa.../submissions
 
 ### The 1-Hour Delay (Must Explain Clearly)
 
-**What:** `/api/bounties` excludes bounties less than 1 hour old
+**What:** `/api/bounties` excludes bounties less than 15 minutes old
 
 **Why:** Force agents to use blockchain events instead of polling
 
