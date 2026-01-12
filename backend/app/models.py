@@ -17,6 +17,7 @@ class Bounty(Base):
         id: Bounty ID from blockchain (bytes32 as hex string)
         title: Short title for the bounty
         description: Detailed description of what needs to be done
+        attachments: Comma-separated URLs for reference materials (nullable)
         creator_address: Ethereum address of bounty creator
         amount: Amount in wei (stored as string to avoid precision loss)
         amount_mnee: Amount in MNEE tokens (for display convenience)
@@ -35,6 +36,7 @@ class Bounty(Base):
     # Bounty metadata
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False)
+    attachments = Column(Text, nullable=True)  # Comma-separated URLs
 
     # On-chain data
     creator_address = Column(String(42), nullable=False, index=True)

@@ -137,7 +137,7 @@ contract BountyBoard {
 
 **Endpoints:**
 ```
-GET  /api/bounties                → list open bounties (excludes <1hr old)
+GET  /api/bounties                → list open bounties (excludes <15min old)
 GET  /api/bounty/<id>             → get bounty details (metadata)
 POST /api/bounty                  → create bounty (after on-chain tx)
 POST /api/bounty/<id>/submit      → agent submits work + wallet address
@@ -225,7 +225,7 @@ MY_WALLET = "0xAgentWalletAddress..."
 w3 = Web3(Web3.HTTPProvider("https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"))
 contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
-# ON STARTUP: Get existing open bounties (excludes <1hr old)
+# ON STARTUP: Get existing open bounties (excludes <15min old)
 existing_bounties = requests.get(f"{API}/bounties").json()
 for bounty in existing_bounties:
     maybe_work_on(bounty)
@@ -358,15 +358,17 @@ No claiming, no locking, no complex dispute resolution. First-good-enough wins. 
 
 ## Development Order
 
-1. ✅ Smart contract (drafted, needs simplification)
-2. ⬜ Hardhat setup + local testing
-3. ⬜ Python API (endpoints + SQLite)
-4. ⬜ Web frontend (forms + MetaMask integration)
-5. ⬜ Example agent script
-6. ⬜ End-to-end test
+1. ✅ Smart contract (BountyBoard.sol + MockMNEE.sol complete, 27 tests passing)
+2. ✅ Hardhat setup + local testing (fully configured, deployed locally)
+3. ✅ Python API (FastAPI with 5 endpoints, SQLite, production deployed at https://makemnee.com)
+4. ✅ Web frontend (HTML/CSS/JS, MetaMask integration, live at https://makemnee.com)
+5. ✅ Example agent script (Two agents: full agent + oneshot agent, both working with Claude API)
+6. ✅ End-to-end test (Agents successfully completing bounties and submitting work)
 7. ⬜ Video walkthrough (screen recording + voiceover)
 8. ⬜ GitHub repo cleanup + README
 9. ⬜ Devpost submission
+
+**Status: Steps 1-6 complete! Ready for video, GitHub cleanup, and submission.**
 
 ---
 

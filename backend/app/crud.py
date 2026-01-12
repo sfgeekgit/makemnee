@@ -30,6 +30,7 @@ def create_bounty(db: Session, bounty: schemas.BountyCreate) -> models.Bounty:
         id=bounty.id.lower(),
         title=bounty.title,
         description=bounty.description,
+        attachments=bounty.attachments,
         creator_address=bounty.creator_address.lower(),
         amount=bounty.amount,
         amount_mnee=wei_to_mnee(bounty.amount),

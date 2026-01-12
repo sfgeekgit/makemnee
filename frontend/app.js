@@ -341,29 +341,30 @@ const api = {
         }
     },
 
-    async createBounty(bountyId, title, description, amountMNEE, creatorAddress) {
+    async createBounty(bountyId, title, description, amountMNEE, creatorAddress, attachments = null) {
         try {
             // Convert MNEE to wei string for API
             const amountWei = utils.mneeToWei(amountMNEE).toString();
 
-            console.log('API createBounty called with:', {
+            const payload = {
                 id: bountyId,
-                title,
-                description,
+                title: title,
+                description: description,
                 creator_address: creatorAddress,
                 amount: amountWei
-            });
+            };
+
+            // Add attachments if provided
+            if (attachments && attachments.trim()) {
+                payload.attachments = attachments.trim();
+            }
+
+            console.log('API createBounty called with:', payload);
 
             const response = await fetch(`${CONFIG.API_BASE_URL}/bounty`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: bountyId,
-                    title: title,
-                    description: description,
-                    creator_address: creatorAddress,
-                    amount: amountWei
-                })
+                body: JSON.stringify(payload)
             });
 
             console.log('API response status:', response.status);
@@ -396,6 +397,31 @@ const api = {
         } catch (error) {
             console.error('Error fetching submissions:', error);
             return [];
+        }
+    },
+
+    async updateBountyStatus(bountyId, status, hunterAddress = null) {
+        try {
+            const body = { status };
+            if (hunterAddress) {
+                body.hunter_address = hunterAddress;
+            }
+
+            const response = await fetch(`${CONFIG.API_BASE_URL}/bounty/${bountyId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to update bounty status: ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating bounty status:', error);
+            throw error;
         }
     }
 };
@@ -497,14 +523,34 @@ const ui = {
         container.innerHTML = '<p class="loading">Loading bounties...</p>';
 
         const bounties = await api.fetchBounties();
-        state.bounties = bounties;
 
-        if (bounties.length === 0) {
+        // If user is logged in, also fetch their bounties to show new ones (< 15 min old)
+        let allBounties = bounties;
+        if (state.account) {
+            const myBounties = await api.fetchMyBounties(state.account);
+
+            // Filter to only show Open bounties (status=0)
+            const openMyBounties = myBounties.filter(b => b.status === 0);
+
+            // Merge bounties, avoiding duplicates (use Map with ID as key)
+            const bountyMap = new Map();
+            bounties.forEach(b => bountyMap.set(b.id, b));
+            openMyBounties.forEach(b => bountyMap.set(b.id, b));
+
+            allBounties = Array.from(bountyMap.values());
+
+            // Sort by created_at descending (newest first)
+            allBounties.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+
+        state.bounties = allBounties;
+
+        if (allBounties.length === 0) {
             container.innerHTML = '<p class="info">No bounties available yet. Be the first to create one!</p>';
             return;
         }
 
-        container.innerHTML = bounties.map(bounty => this.renderBountyCard(bounty)).join('');
+        container.innerHTML = allBounties.map(bounty => this.renderBountyCard(bounty)).join('');
 
         // Add click listeners
         document.querySelectorAll('.bounty-card').forEach(card => {
@@ -528,14 +574,17 @@ const ui = {
         // Use the new my-bounties endpoint (no delay)
         const myBounties = await api.fetchMyBounties(state.account);
 
-        state.myBounties = myBounties;
+        // Filter to only show Open bounties (status=0)
+        const openBounties = myBounties.filter(b => b.status === 0);
 
-        if (myBounties.length === 0) {
-            container.innerHTML = '<p class="info">You haven\'t created any bounties yet.</p>';
+        state.myBounties = openBounties;
+
+        if (openBounties.length === 0) {
+            container.innerHTML = '<p class="info">You haven\'t created any open bounties yet.</p>';
             return;
         }
 
-        container.innerHTML = myBounties.map(bounty => this.renderBountyCard(bounty)).join('');
+        container.innerHTML = openBounties.map(bounty => this.renderBountyCard(bounty)).join('');
 
         // Add click listeners
         document.querySelectorAll('.bounty-card').forEach(card => {
@@ -599,9 +648,20 @@ const ui = {
         if (bounty.attachments) {
             const urls = bounty.attachments.split(',').map(url => url.trim()).filter(url => url);
             if (urls.length > 0) {
-                attachmentsDiv.innerHTML = '<p><strong>Attachments:</strong></p><ul>' +
-                    urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('') +
-                    '</ul>';
+                const attachmentItems = urls.map(url => {
+                    const isImage = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url);
+                    if (isImage) {
+                        return `<li>
+                            <a href="${url}" target="_blank">${this.escapeHtml(url)}</a>
+                            <br>
+                            <img src="${url}" alt="Attachment" style="max-width: 400px; max-height: 300px; margin-top: 8px; border-radius: 4px;">
+                        </li>`;
+                    } else {
+                        return `<li><a href="${url}" target="_blank">${this.escapeHtml(url)}</a></li>`;
+                    }
+                }).join('');
+
+                attachmentsDiv.innerHTML = '<p><strong>Attachments:</strong></p><ul>' + attachmentItems + '</ul>';
             } else {
                 attachmentsDiv.innerHTML = '';
             }
@@ -648,12 +708,12 @@ const ui = {
         return `
             <div class="submission-card">
                 <div class="submission-header">
-                    <span class="submission-wallet">${submission.wallet_address}</span>
+                    <span class="submission-wallet">${submission.agent_wallet}</span>
                 </div>
                 <div class="submission-result">${this.escapeHtml(submission.result)}</div>
                 <div class="submission-footer">
                     <span class="submission-time">${utils.formatDate(submission.submitted_at)}</span>
-                    ${canRelease ? `<button class="btn btn-success" onclick="ui.handleReleasePayment('${submission.wallet_address}')">Release Payment</button>` : ''}
+                    ${canRelease ? `<button class="btn btn-success" onclick="ui.handleReleasePayment('${submission.agent_wallet}')">Release Payment</button>` : ''}
                 </div>
             </div>
         `;
@@ -702,8 +762,8 @@ const ui = {
 
             // Step 3: Save metadata to API
             utils.showStatus('Step 3/3: Saving bounty metadata...', 'info');
-            console.log('Calling API with:', { bountyId, title, description, amountMNEE, creator: state.account });
-            await api.createBounty(bountyId, title, description, amountMNEE, state.account);
+            console.log('Calling API with:', { bountyId, title, description, amountMNEE, creator: state.account, attachments });
+            await api.createBounty(bountyId, title, description, amountMNEE, state.account, attachments);
 
             utils.showStatus('Bounty created successfully!', 'success');
 
@@ -770,7 +830,7 @@ const ui = {
 
             // releaseBounty(bytes32,address)
             const selector = '0x98b6cf85';
-            const bountyIdHex = state.currentBounty.bounty_id.replace('0x', '').padStart(64, '0');
+            const bountyIdHex = state.currentBounty.id.replace('0x', '').padStart(64, '0');
             const addressHex = hunterAddress.replace('0x', '').padStart(64, '0');
             const data = selector + bountyIdHex + addressHex;
 
@@ -785,6 +845,10 @@ const ui = {
 
             utils.showStatus('Waiting for transaction confirmation...', 'info');
             await wallet.waitForTransaction(txHash);
+
+            // Update database status
+            utils.showStatus('Updating bounty status...', 'info');
+            await api.updateBountyStatus(state.currentBounty.id, 1, hunterAddress);
 
             utils.showStatus('Payment released successfully!', 'success');
 
@@ -810,7 +874,7 @@ const ui = {
 
             // cancelBounty(bytes32)
             const selector = '0x3b0b43a6';
-            const bountyIdHex = state.currentBounty.bounty_id.replace('0x', '').padStart(64, '0');
+            const bountyIdHex = state.currentBounty.id.replace('0x', '').padStart(64, '0');
             const data = selector + bountyIdHex;
 
             const txHash = await window.ethereum.request({
@@ -824,6 +888,10 @@ const ui = {
 
             utils.showStatus('Waiting for transaction confirmation...', 'info');
             await wallet.waitForTransaction(txHash);
+
+            // Update database status
+            utils.showStatus('Updating bounty status...', 'info');
+            await api.updateBountyStatus(state.currentBounty.id, 2);
 
             utils.showStatus('Bounty cancelled successfully!', 'success');
 

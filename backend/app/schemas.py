@@ -17,6 +17,7 @@ class BountyCreate(BaseModel):
     id: str = Field(..., min_length=66, max_length=66, description="bytes32 bounty ID from blockchain")
     title: str = Field(..., min_length=1, max_length=200, description="Short title for the bounty")
     description: str = Field(..., min_length=1, description="Detailed description of the work")
+    attachments: Optional[str] = Field(None, description="Comma-separated URLs for reference materials")
     creator_address: str = Field(..., min_length=42, max_length=42, description="Ethereum address of creator")
     amount: str = Field(..., min_length=1, description="Amount in wei as string")
 
@@ -70,6 +71,7 @@ class BountyResponse(BaseModel):
     id: str
     title: str
     description: str
+    attachments: Optional[str] = None
     creator_address: str
     amount: str
     amount_mnee: float
@@ -139,6 +141,30 @@ class SubmissionCreateResponse(BaseModel):
     submission_id: int
     bounty_id: str
     message: str
+
+
+class BountyStatusUpdate(BaseModel):
+    """
+    Request model for updating bounty status.
+
+    Used by PATCH /api/bounty/{id}/status endpoint.
+    """
+    status: int = Field(..., ge=0, le=2, description="New status: 0=Open, 1=Completed, 2=Cancelled")
+    hunter_address: Optional[str] = Field(None, min_length=42, max_length=42, description="Hunter address (for completed bounties)")
+
+    @field_validator('hunter_address')
+    @classmethod
+    def validate_hunter(cls, v: Optional[str]) -> Optional[str]:
+        """Validate and normalize Ethereum address"""
+        if v is None:
+            return v
+        if not v.startswith('0x') or len(v) != 42:
+            raise ValueError('Invalid Ethereum address (must be 0x + 40 hex chars)')
+        try:
+            int(v, 16)  # Verify it's valid hex
+        except ValueError:
+            raise ValueError('Invalid hex string')
+        return v.lower()
 
 
 class ErrorResponse(BaseModel):

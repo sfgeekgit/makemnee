@@ -50,7 +50,7 @@ def list_bounties(db: Session = Depends(get_db)):
 @router.get("/my-bounties/{creator_address}", response_model=List[schemas.BountyResponse])
 def get_my_bounties(creator_address: str, db: Session = Depends(get_db)):
     """
-    Get all bounties created by a specific address (no time delay).
+    Get all OPEN bounties created by a specific address (no time delay).
 
     This endpoint allows users to immediately see their own bounties
     without waiting for the 15-minute delay. Prevents scraping since
@@ -60,11 +60,15 @@ def get_my_bounties(creator_address: str, db: Session = Depends(get_db)):
         creator_address: Ethereum address of bounty creator
 
     Returns:
-        List of all bounties created by this address,
+        List of open bounties created by this address,
         ordered by creation time (newest first)
 
     Raises:
         HTTPException 400: If address format is invalid
+
+    Note:
+        - Only returns bounties with status=0 (Open)
+        - Cancelled and completed bounties are excluded
     """
     # Validate ethereum address format
     if not creator_address.startswith('0x') or len(creator_address) != 42:
@@ -79,7 +83,10 @@ def get_my_bounties(creator_address: str, db: Session = Depends(get_db)):
         creator_address=creator_address.lower()
     )
 
-    return bounties
+    # Filter to only show Open bounties (status=0)
+    open_bounties = [b for b in bounties if b.status == 0]
+
+    return open_bounties
 
 
 @router.get("/bounty/{bounty_id}", response_model=schemas.BountyResponse)
@@ -173,3 +180,65 @@ def create_bounty(
         id=db_bounty.id,
         message="Bounty metadata created successfully"
     )
+
+
+@router.patch("/bounty/{bounty_id}/status", response_model=schemas.BountyResponse)
+def update_bounty_status(
+    bounty_id: str,
+    status_update: schemas.BountyStatusUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Update bounty status after on-chain transaction.
+
+    This endpoint is called by the frontend after a successful
+    cancelBounty() or releaseBounty() transaction on the blockchain.
+    It updates the bounty status in the database to match the on-chain state.
+
+    Args:
+        bounty_id: Bounty ID (bytes32 hex string)
+        status_update: Status update data including:
+            - status: New status (0=Open, 1=Completed, 2=Cancelled)
+            - hunter_address: Hunter address (required for status=1)
+
+    Returns:
+        Updated bounty data
+
+    Raises:
+        HTTPException 400: If bounty ID format is invalid or update fails
+        HTTPException 404: If bounty not found
+
+    Note:
+        - This only updates the database, not the blockchain
+        - The blockchain transaction must complete before calling this
+        - For status=1 (Completed), hunter_address is required
+    """
+    # Validate bytes32 format
+    if not is_valid_bytes32(bounty_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid bounty ID format (expected: 0x + 64 hex chars)"
+        )
+
+    # Validate status=1 requires hunter_address
+    if status_update.status == 1 and not status_update.hunter_address:
+        raise HTTPException(
+            status_code=400,
+            detail="hunter_address is required for completed bounties"
+        )
+
+    # Update bounty status
+    updated_bounty = crud.update_bounty_status(
+        db=db,
+        bounty_id=bounty_id,
+        new_status=status_update.status,
+        hunter_address=status_update.hunter_address
+    )
+
+    if updated_bounty is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Bounty not found: {bounty_id}"
+        )
+
+    return updated_bounty
