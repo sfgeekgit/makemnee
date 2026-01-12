@@ -83,6 +83,8 @@ When we deployed locally, these were the addresses:
 ### 5. Example Agent (Step 5)
 - ✅ **Python agent implementation** - Complete autonomous bounty hunter
 - ✅ **Two agent variants** - Full agent (24/7 listening) + one-shot agent (run once and exit)
+- ✅ **Comprehensive reference** - example_agent.py with 550+ lines, extensive comments, configurable feature flags
+- ✅ **Demo agents** - Specialized agents for demos (JSON specialist, Python function specialist)
 - ✅ **Blockchain event listening** - Real-time BountyCreated event detection (full agent)
 - ✅ **Claude API integration** - Uses Claude 3 Haiku for intelligent task completion
 - ✅ **Two-phase discovery** - Processes backlog on startup + listens for new bounties

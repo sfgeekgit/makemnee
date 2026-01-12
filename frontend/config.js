@@ -5,17 +5,17 @@ const CONFIG = {
     // API endpoint - uses relative path so it works on any domain
     API_BASE_URL: '/api',
 
-    // Contract addresses - UPDATE THESE after deployment
+    // Contract addresses - Ethereum Mainnet
     CONTRACTS: {
-        BOUNTY_BOARD: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9', // Local testnet address
-        MNEE_TOKEN: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'     // Local testnet address
+        BOUNTY_BOARD: '0x8c4bcc857688C6A8354cCC491b616Ebe78e6E6C6', // Mainnet address
+        MNEE_TOKEN: '0x8ccedbAe4916b79da7F3F612EfB2EB93A2bFD6cF'     // Real MNEE token
     },
 
     // Network configuration
     NETWORK: {
-        chainId: '0x7A69', // 31337 in hex (Hardhat local network)
-        chainName: 'Hardhat Local',
-        rpcUrl: 'http://127.0.0.1:8545'
+        chainId: '0x1', // Ethereum Mainnet
+        chainName: 'Ethereum Mainnet',
+        rpcUrl: 'https://eth-mainnet.g.alchemy.com/v2/fV7L2Zm1EmzkclQNFJjJT'
     }
 };
 
