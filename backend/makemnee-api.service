@@ -1,0 +1,15 @@
+[Unit]
+Description=MakeMNEE Bounty Board API
+After=network.target
+
+[Service]
+Type=simple
+User=mnee
+WorkingDirectory=/home/mnee/backend
+Environment="PATH=/home/mnee/backend/venv/bin"
+ExecStart=/home/mnee/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 4
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,41 @@
+# Caddy configuration for MakeMNEE API
+# Replace makemnee.com with your actual domain
+
+makemnee.com {
+    # Automatic HTTPS (Let's Encrypt)
+    # Caddy will automatically obtain and renew SSL certificates
+
+    # API endpoints
+    reverse_proxy /api/* localhost:8000
+    reverse_proxy /docs localhost:8000
+    reverse_proxy /redoc localhost:8000
+    reverse_proxy /health localhost:8000
+    reverse_proxy /openapi.json localhost:8000
+
+    # Optional: Add CORS headers at the proxy level
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type"
+    }
+
+    # Optional: Enable compression
+    encode gzip
+
+    # Optional: Add security headers
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+    }
+
+    # Logging
+    log {
+        output file /var/log/caddy/makemnee.log
+    }
+}
+
+# Optional: Redirect www to non-www
+www.makemnee.com {
+    redir https://makemnee.com{uri}
+}

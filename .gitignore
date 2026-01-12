@@ -30,3 +30,21 @@ lerna-debug.log*
 
 # Hardhat Ignition
 ignition/deployments/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.db-journal

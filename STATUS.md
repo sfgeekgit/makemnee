@@ -16,6 +16,15 @@
 - ✅ **End-to-end test** - Full bounty flow tested and working locally
 - ✅ **GitHub repo initialized** - Code pushed with correct authorship
 
+### 2. Python API Backend (Step 3)
+- ✅ **FastAPI application** - All 5 endpoints implemented and tested
+- ✅ **SQLite database** - bounties and submissions tables with proper schema
+- ✅ **1-hour delay filter** - Intentional delay on /api/bounties to encourage event listening
+- ✅ **Data validation** - bytes32 IDs, Ethereum addresses, wei amounts
+- ✅ **Wei/MNEE conversion** - Automatic conversion for display (1 MNEE = 10^18 wei)
+- ✅ **Production ready** - Caddyfile, systemd service, deployment guide
+- ✅ **API documentation** - Interactive docs at /docs, comprehensive README
+
 ### Contract Addresses (Local Test)
 When we deployed locally, these were the addresses:
 - MockMNEE: `0x5FbDB2315678afecb367f032d93F642f64180aa3`
@@ -31,33 +40,7 @@ When we deployed locally, these were the addresses:
 
 ## 🎯 Next Steps (from mneePLAN.md)
 
-### Step 3: Python API (Backend) - **NEXT**
-Build the backend API to store bounty metadata and handle submissions.
-
-**Tech Stack:**
-- Python (Flask or FastAPI)
-- SQLite database
-- REST API endpoints
-
-**Required Endpoints:**
-```
-GET  /api/bounties                → list open bounties (excludes <1hr old)
-GET  /api/bounty/<id>             → get bounty details (metadata)
-POST /api/bounty                  → create bounty (after on-chain tx)
-POST /api/bounty/<id>/submit      → agent submits work + wallet address
-GET  /api/bounty/<id>/submissions → view submissions for a bounty
-```
-
-**Database Schema (SQLite):**
-- `bounties` table: id (bytes32), title, description, creator_address, amount, status, created_at
-- `submissions` table: id, bounty_id, agent_wallet, result, submitted_at
-
-**Important Design Note:**
-- The 1-hour delay on `/api/bounties` is intentional to encourage agents to use blockchain event listeners
-- Web UI queries database directly (no delay)
-- API holds zero private keys
-
-### Step 4: Web Frontend
+### Step 4: Web Frontend - **NEXT**
 - HTML/CSS/JS (vanilla or minimal framework)
 - MetaMask integration for wallet connection
 - Forms for creating bounties
@@ -93,6 +76,27 @@ GET  /api/bounty/<id>/submissions → view submissions for a bounty
 │   └── DeployAll.js          # Deploy both together
 ├── scripts/
 │   └── test-bounty-flow.js   # End-to-end demo script
+├── backend/                  # Python API
+│   ├── app/
+│   │   ├── main.py           # FastAPI entry point
+│   │   ├── database.py       # SQLAlchemy setup
+│   │   ├── models.py         # ORM models
+│   │   ├── schemas.py        # Pydantic models
+│   │   ├── crud.py           # Database operations
+│   │   ├── api/
+│   │   │   ├── bounties.py   # Bounty endpoints
+│   │   │   └── submissions.py # Submission endpoints
+│   │   └── utils/
+│   │       ├── converters.py # Validation & conversion
+│   │       └── filters.py    # 1-hour delay logic
+│   ├── tests/                # API tests
+│   ├── requirements.txt      # Python dependencies
+│   ├── run.py                # Dev server launcher
+│   ├── Caddyfile             # Reverse proxy config
+│   ├── makemnee-api.service  # Systemd service
+│   ├── README.md             # API documentation
+│   ├── DEPLOYMENT.md         # Production deployment guide
+│   └── bountyboard.db        # SQLite database (created at runtime)
 ├── hardhat.config.js         # Local, Sepolia, mainnet config
 ├── .env                      # Environment variables (not in git)
 ├── .gitignore
@@ -133,6 +137,32 @@ npx hardhat run scripts/test-bounty-flow.js --network localhost
 npx hardhat ignition deploy ./ignition/modules/MockMNEE.js --network sepolia
 npx hardhat ignition deploy ./ignition/modules/BountyBoard.js --network sepolia --parameters '{"mneeAddress": "0x..."}'
 ```
+
+### Backend API (Development)
+```bash
+cd backend
+source venv/bin/activate      # Activate virtual environment
+python run.py                 # Start API server (http://localhost:8000)
+```
+
+**API Endpoints:**
+- http://localhost:8000/docs - Interactive API documentation
+- http://localhost:8000/health - Health check
+- http://localhost:8000/api/bounties - List open bounties (1hr+ old)
+
+### Backend API (Production)
+```bash
+# Set up as systemd service
+sudo cp backend/makemnee-api.service /etc/systemd/system/
+sudo systemctl start makemnee-api
+sudo systemctl enable makemnee-api
+
+# Configure Caddy (automatic SSL)
+sudo cp backend/Caddyfile /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+See `backend/DEPLOYMENT.md` for full production deployment guide.
 
 ### Git Commands
 ```bash
@@ -186,9 +216,14 @@ git push
 - Local deployment works
 - End-to-end bounty flow verified
 - GitHub authentication via SSH
+- Python API fully functional (5 endpoints)
+- All API endpoints tested with curl
+- Database schema working correctly
+- 1-hour delay filter verified
+- Production deployment files ready
 
 **Ready to Start:**
-Step 3 - Python API backend. Everything is set up and tested for the smart contracts.
+Step 4 - Web Frontend. Smart contracts and backend API are complete and tested.
 
 ---
 
