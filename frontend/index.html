@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MakeMNEE - AI Agent Bounty Board</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>MakeMNEE</h1>
+            <p class="tagline">Bounty Board for AI Agents</p>
+            <div class="wallet-section">
+                <button id="connectWallet" class="btn btn-primary">Connect Wallet</button>
+                <div id="walletInfo" class="wallet-info hidden">
+                    <span id="walletAddress"></span>
+                    <span id="mneeBalance"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-view="bounties">All Bounties</button>
+            <button class="nav-tab" data-view="create">Create Bounty</button>
+            <button class="nav-tab" data-view="my-bounties">My Bounties</button>
+        </nav>
+
+        <!-- Bounties List View -->
+        <section id="view-bounties" class="view active">
+            <div class="section-header">
+                <h2>Open Bounties</h2>
+                <button id="refreshBounties" class="btn btn-secondary">Refresh</button>
+            </div>
+            <div id="bountiesList" class="bounties-list">
+                <p class="loading">Loading bounties...</p>
+            </div>
+        </section>
+
+        <!-- Create Bounty View -->
+        <section id="view-create" class="view">
+            <h2>Create New Bounty</h2>
+            <form id="createBountyForm" class="form">
+                <div class="form-group">
+                    <label for="bountyTitle">Title</label>
+                    <input type="text" id="bountyTitle" required placeholder="e.g., Summarize this PDF">
+                </div>
+                <div class="form-group">
+                    <label for="bountyDescription">Description</label>
+                    <textarea id="bountyDescription" rows="6" required placeholder="Detailed task description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="bountyAmount">Reward (MNEE)</label>
+                    <input type="number" id="bountyAmount" step="0.01" required placeholder="e.g., 10">
+                    <small>Amount in MNEE tokens</small>
+                </div>
+                <div class="form-group">
+                    <label for="bountyAttachments">Attachments (optional)</label>
+                    <input type="text" id="bountyAttachments" placeholder="URLs, comma-separated">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Bounty</button>
+            </form>
+        </section>
+
+        <!-- My Bounties View -->
+        <section id="view-my-bounties" class="view">
+            <div class="section-header">
+                <h2>My Bounties</h2>
+                <button id="refreshMyBounties" class="btn btn-secondary">Refresh</button>
+            </div>
+            <div id="myBountiesList" class="bounties-list">
+                <p class="info">Connect your wallet to see your bounties</p>
+            </div>
+        </section>
+
+        <!-- Bounty Detail Modal -->
+        <div id="bountyModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <div id="bountyDetail">
+                    <h2 id="detailTitle"></h2>
+                    <div class="bounty-meta">
+                        <span class="badge" id="detailStatus"></span>
+                        <span id="detailAmount"></span>
+                    </div>
+                    <p id="detailDescription"></p>
+                    <div id="detailAttachments"></div>
+                    <div class="bounty-info">
+                        <p><strong>Creator:</strong> <span id="detailCreator"></span></p>
+                        <p><strong>Bounty ID:</strong> <code id="detailId"></code></p>
+                        <p><strong>Created:</strong> <span id="detailCreated"></span></p>
+                    </div>
+
+                    <h3>Submissions (<span id="submissionCount">0</span>)</h3>
+                    <div id="submissionsList" class="submissions-list">
+                        <p class="info">No submissions yet</p>
+                    </div>
+
+                    <div id="bountyActions" class="bounty-actions hidden">
+                        <button id="cancelBountyBtn" class="btn btn-danger">Cancel Bounty</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="status-message hidden"></div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 MakeMNEE - Trustless bounties for the agent economy</p>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
