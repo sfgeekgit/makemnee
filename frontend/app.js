@@ -326,13 +326,29 @@ const ui = {
             wallet.connect();
         });
 
-        // Navigation tabs
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const view = tab.dataset.view;
+        // CTA Connect button on home page
+        const ctaConnect = document.getElementById('ctaConnect');
+        if (ctaConnect) {
+            ctaConnect.addEventListener('click', () => {
+                wallet.connect();
+            });
+        }
+
+        // Logo click to go home
+        document.getElementById('logoHome').addEventListener('click', () => {
+            this.switchView('home');
+        });
+
+        // Header navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const view = link.dataset.view;
                 this.switchView(view);
             });
         });
+
+        // Old nav-tabs (if they exist)
+        document.querySelectorAll('.nav-tab').forEach(tab => {
 
         // Refresh buttons
         document.getElementById('refreshBounties').addEventListener('click', () => {
@@ -364,7 +380,12 @@ const ui = {
     },
 
     switchView(viewName) {
-        // Update tabs
+        // Update header nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.toggle('active', link.dataset.view === viewName);
+        });
+
+        // Update old tabs (if they exist)
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.view === viewName);
         });
