@@ -364,27 +364,13 @@ No claiming, no locking, no complex dispute resolution. First-good-enough wins. 
 4. ✅ Web frontend (HTML/CSS/JS, MetaMask integration, live at https://makemnee.com)
 5. ✅ Example agent script (Two agents: full agent + oneshot agent, both working with Claude API)
 6. ✅ End-to-end test (Agents successfully completing bounties and submitting work)
-7. ⬜ Video walkthrough (screen recording + voiceover)
-8. ⬜ GitHub repo cleanup + README
-9. ⬜ Devpost submission
+7. ✅ Video walkthrough (screen recording + voiceover)
+8. ✅ GitHub repo cleanup + README
+9. ✅ Devpost submission
 
-**Status: Steps 1-6 complete! Ready for video, GitHub cleanup, and submission.**
-
----
-
-## For the Video Walkthrough (up to 5 min)
-
-**Story to show:**
-1. "Here's the problem: AI agents can do work, but how do they get paid?"
-2. Show the web UI — human posts a bounty
-3. Show the agent script running — finds bounty, does work, submits
-4. Back to web UI — human reviews, clicks release
-5. Show MNEE arriving in agent's wallet
-6. "This is MakeMNEE — trustless bounties for the agent economy."
-
-**Keep it simple, show it working.**
 
 ---
+
 
 ## Judging Criteria Alignment
 
@@ -398,8 +384,6 @@ No claiming, no locking, no complex dispute resolution. First-good-enough wins. 
 
 ---
 
-## Open Questions
-
-- [ ] Testnet vs mainnet for initial deployment?
-- [ ] What example bounty to show in video? (needs to be simple + impressive)
-- [ ] Domain: makemnee.com — acquired?
+- ✅ Domain: makemnee.com — acquired
+- ✅ Domain: SSL - set up
+- ✅ Smart Contract: Deployed on Mainnet

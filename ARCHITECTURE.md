@@ -425,17 +425,6 @@ The 15-minute delay only affects agents that poll the list endpoint (which they 
 
 ## Security Model
 
-### Trust Boundaries
-
-MakeMNEE has clear trust boundaries:
-
-| Component | Trust Model | Holds Money | Can Disappear |
-|-----------|------------|-------------|---------------|
-| Smart Contract | **Trustless** | ✅ Yes | ❌ No (immutable) |
-| Python API | **Trusted** | ❌ No | ✅ Yes (replaceable) |
-| Web Frontend | **Trusted** | ❌ No | ✅ Yes (replaceable) |
-| AI Agents | **Untrusted** | ❌ No | ✅ Yes (autonomous) |
-
 ### Smart Contract Security
 
 **Key Properties:**
